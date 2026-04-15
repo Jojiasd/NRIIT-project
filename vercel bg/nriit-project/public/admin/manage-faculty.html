@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Faculty</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Manage Faculty</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="manage-students.html">Students</a></li>
+                <li><a href="manage-faculty.html">Faculty</a></li>
+                <li><a href="manage-news.html">News</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="admin-section">
+            <h2>Manage Faculty</h2>
+            
+            <div class="filter-section">
+                <input type="text" id="searchFaculty" placeholder="Search by name or email">
+                <button onclick="searchFaculty()">Search</button>
+                <button onclick="showAddForm()">Add Faculty</button>
+            </div>
+
+            <div id="facultyForm" class="form-section" style="display: none;">
+                <h3>Add New Faculty</h3>
+                <form id="addFacultyForm">
+                    <input type="text" id="name" placeholder="Name" required>
+                    <input type="email" id="email" placeholder="Email" required>
+                    <input type="text" id="department" placeholder="Department" required>
+                    <button type="submit">Add Faculty</button>
+                </form>
+            </div>
+
+            <div id="facultyList" class="faculty-table">
+                <p>Loading faculty...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadFaculty() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin?action=faculty', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayFaculty(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function displayFaculty(faculty) {
+            const facultyList = document.getElementById('facultyList');
+            if (faculty.length === 0) {
+                facultyList.innerHTML = '<p>No faculty found.</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>Name</th><th>Email</th><th>Department</th><th>Actions</th></tr>';
+            faculty.forEach(f => {
+                html += `<tr>
+                    <td>${f.name}</td>
+                    <td>${f.email}</td>
+                    <td>${f.department}</td>
+                    <td><button onclick="deleteFaculty('${f.id}')">Delete</button></td>
+                </tr>`;
+            });
+            html += '</table>';
+            facultyList.innerHTML = html;
+        }
+
+        function showAddForm() {
+            document.getElementById('facultyForm').style.display = 'block';
+        }
+
+        document.getElementById('addFacultyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('/api/admin?action=addFaculty', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        department: document.getElementById('department').value
+                    })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+                loadFaculty();
+                document.getElementById('facultyForm').style.display = 'none';
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        async function deleteFaculty(facultyId) {
+            if (!confirm('Are you sure?')) return;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('/api/admin?action=deleteFaculty', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ facultyId })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+                loadFaculty();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function searchFaculty() {
+            const searchQuery = document.getElementById('searchFaculty').value;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`/api/admin?action=searchFaculty&query=${searchQuery}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayFaculty(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadFaculty();
+    </script>
+</body>
+</html>

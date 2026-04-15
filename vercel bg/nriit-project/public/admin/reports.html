@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Reports</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="manage-students.html">Students</a></li>
+                <li><a href="manage-faculty.html">Faculty</a></li>
+                <li><a href="manage-news.html">News</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="admin-section">
+            <h2>System Reports</h2>
+            
+            <div class="report-filters">
+                <select id="reportType">
+                    <option value="attendance">Attendance Report</option>
+                    <option value="results">Student Results Report</option>
+                    <option value="fees">Fees Collection Report</option>
+                </select>
+                <button onclick="generateReport()">Generate Report</button>
+            </div>
+
+            <div id="reportContent" class="report-data">
+                <p>Select report type and click Generate Report</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function generateReport() {
+            const token = localStorage.getItem('token');
+            const reportType = document.getElementById('reportType').value;
+
+            try {
+                const response = await fetch(`/api/admin?action=report&type=${reportType}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayReport(data, reportType);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function displayReport(data, reportType) {
+            const reportContent = document.getElementById('reportContent');
+            
+            if (reportType === 'attendance') {
+                let html = '<h3>Attendance Report</h3>';
+                html += '<table><tr><th>Student</th><th>Attendance %</th></tr>';
+                data.forEach(item => {
+                    html += `<tr><td>${item.name}</td><td>${item.percentage}%</td></tr>`;
+                });
+                html += '</table>';
+                reportContent.innerHTML = html;
+            } else if (reportType === 'fees') {
+                let html = '<h3>Fees Collection Report</h3>';
+                html += '<table><tr><th>Month</th><th>Collected</th><th>Pending</th></tr>';
+                data.forEach(item => {
+                    html += `<tr><td>${item.month}</td><td>₹${item.collected}</td><td>₹${item.pending}</td></tr>`;
+                });
+                html += '</table>';
+                reportContent.innerHTML = html;
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

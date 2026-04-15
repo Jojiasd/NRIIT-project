@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Students</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Manage Students</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="manage-students.html">Students</a></li>
+                <li><a href="manage-faculty.html">Faculty</a></li>
+                <li><a href="manage-news.html">News</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="admin-section">
+            <h2>Manage Students</h2>
+            
+            <div class="filter-section">
+                <input type="text" id="searchStudent" placeholder="Search by name or email">
+                <button onclick="searchStudents()">Search</button>
+            </div>
+
+            <div id="studentsList" class="student-table">
+                <p>Loading students...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadStudents() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin?action=students', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayStudents(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function displayStudents(students) {
+            const studentsList = document.getElementById('studentsList');
+            if (students.length === 0) {
+                studentsList.innerHTML = '<p>No students found.</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>Name</th><th>Email</th><th>Course</th><th>Roll Number</th><th>Actions</th></tr>';
+            students.forEach(student => {
+                html += `<tr>
+                    <td>${student.name}</td>
+                    <td>${student.email}</td>
+                    <td>${student.course}</td>
+                    <td>${student.rollNumber}</td>
+                    <td><button onclick="deleteStudent('${student.id}')">Delete</button></td>
+                </tr>`;
+            });
+            html += '</table>';
+            studentsList.innerHTML = html;
+        }
+
+        async function searchStudents() {
+            const searchQuery = document.getElementById('searchStudent').value;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch(`/api/admin?action=search&query=${searchQuery}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayStudents(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        async function deleteStudent(studentId) {
+            if (!confirm('Are you sure?')) return;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('/api/admin?action=deleteStudent', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ studentId })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+                loadStudents();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadStudents();
+    </script>
+</body>
+</html>

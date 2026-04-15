@@ -1,0 +1,23 @@
+{
+  "name": "nriit-project",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "National Research Institute of Information Technology - Complete Management System",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "node api/auth.js",
+    "start": "node api/auth.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^0.23.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "oracledb": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "18.x"
+  }
+}

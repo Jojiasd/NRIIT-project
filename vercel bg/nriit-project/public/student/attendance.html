@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Student Attendance</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="fees.html">Fees</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="attendance-container">
+            <h2>My Attendance</h2>
+            
+            <div class="attendance-stats">
+                <div class="stat-card">
+                    <h3>Total Classes</h3>
+                    <p id="totalClasses">--</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Classes Attended</h3>
+                    <p id="classesAttended">--</p>
+                </div>
+                
+                <div class="stat-card">
+                    <h3>Attendance Percentage</h3>
+                    <p id="attendancePercentage">--</p>
+                </div>
+            </div>
+
+            <h3>Month-wise Attendance</h3>
+            <div id="attendanceList" class="attendance-table">
+                <p>Loading attendance data...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadAttendance() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/attendance', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalClasses').textContent = data.totalClasses;
+                    document.getElementById('classesAttended').textContent = data.classesAttended;
+                    document.getElementById('attendancePercentage').textContent = data.percentage + '%';
+                    
+                    let html = '<table><tr><th>Month</th><th>Present</th><th>Total</th></tr>';
+                    data.monthlyData.forEach(month => {
+                        html += `<tr><td>${month.month}</td><td>${month.present}</td><td>${month.total}</td></tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('attendanceList').innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadAttendance();
+    </script>
+</body>
+</html>

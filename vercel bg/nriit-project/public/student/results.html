@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Results</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Student Results</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="fees.html">Fees</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="results-container">
+            <h2>My Results</h2>
+            
+            <div id="resultsList" class="results-table">
+                <p>Loading results...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadResults() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/student?action=results', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const resultsList = document.getElementById('resultsList');
+                    
+                    if (data.length === 0) {
+                        resultsList.innerHTML = '<p>No results available yet.</p>';
+                        return;
+                    }
+
+                    let html = '<table><tr><th>Subject</th><th>Marks</th><th>Grade</th></tr>';
+                    data.forEach(result => {
+                        html += `<tr><td>${result.subject}</td><td>${result.marks}</td><td>${result.grade}</td></tr>`;
+                    });
+                    html += '</table>';
+                    resultsList.innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadResults();
+    </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Fees</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Student Fees</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="fees.html">Fees</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="fees-container">
+            <h2>Fee Payment Portal</h2>
+            
+            <div class="fees-summary">
+                <div class="fee-card">
+                    <h3>Total Due</h3>
+                    <p id="totalDue" class="amount">₹ --</p>
+                </div>
+                
+                <div class="fee-card">
+                    <h3>Total Paid</h3>
+                    <p id="totalPaid" class="amount">₹ --</p>
+                </div>
+                
+                <div class="fee-card">
+                    <h3>Balance</h3>
+                    <p id="balance" class="amount">₹ --</p>
+                </div>
+            </div>
+
+            <h3>Payment History</h3>
+            <div id="paymentHistory" class="payment-table">
+                <p>Loading payment history...</p>
+            </div>
+
+            <div class="payment-section">
+                <h3>Make a Payment</h3>
+                <form id="paymentForm">
+                    <input type="number" id="amount" placeholder="Amount" required>
+                    <select id="paymentMethod" required>
+                        <option value="">Select Payment Method</option>
+                        <option value="card">Credit/Debit Card</option>
+                        <option value="netbanking">Net Banking</option>
+                        <option value="upi">UPI</option>
+                    </select>
+                    <button type="submit">Pay Now</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadFees() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/fees', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalDue').textContent = '₹ ' + data.totalDue;
+                    document.getElementById('totalPaid').textContent = '₹ ' + data.totalPaid;
+                    document.getElementById('balance').textContent = '₹ ' + data.balance;
+                    
+                    let html = '<table><tr><th>Date</th><th>Amount</th><th>Status</th></tr>';
+                    data.payments.forEach(payment => {
+                        html += `<tr><td>${payment.date}</td><td>₹ ${payment.amount}</td><td>${payment.status}</td></tr>`;
+                    });
+                    html += '</table>';
+                    document.getElementById('paymentHistory').innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const amount = document.getElementById('amount').value;
+            const paymentMethod = document.getElementById('paymentMethod').value;
+
+            try {
+                const response = await fetch('/api/fees?action=pay', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ amount, paymentMethod })
+                });
+
+                const data = await response.json();
+                alert(data.message || 'Payment processed');
+                loadFees();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadFees();
+    </script>
+</body>
+</html>

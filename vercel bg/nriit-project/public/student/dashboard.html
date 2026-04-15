@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Student Dashboard</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="results.html">Results</a></li>
+                <li><a href="attendance.html">Attendance</a></li>
+                <li><a href="fees.html">Fees</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="dashboard-container">
+            <h2>Welcome, <span id="studentName">Student</span></h2>
+            
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Attendance</h3>
+                    <p id="attendancePercentage">--</p>
+                    <a href="attendance.html">View Details</a>
+                </div>
+                
+                <div class="card">
+                    <h3>GPA</h3>
+                    <p id="gpa">--</p>
+                    <a href="results.html">View Results</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Fees Status</h3>
+                    <p id="feesStatus">--</p>
+                    <a href="fees.html">Pay Fees</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Profile</h3>
+                    <p>Manage your profile</p>
+                    <a href="profile.html">Edit Profile</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script>
+        async function loadDashboard() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/student', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('studentName').textContent = data.name;
+                    document.getElementById('attendancePercentage').textContent = data.attendance + '%';
+                    document.getElementById('gpa').textContent = data.gpa || '--';
+                    document.getElementById('feesStatus').textContent = data.feesStatus || '--';
+                } else {
+                    window.location.href = '../auth/login.html';
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>

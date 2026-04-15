@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage News</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Manage News</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="manage-students.html">Students</a></li>
+                <li><a href="manage-faculty.html">Faculty</a></li>
+                <li><a href="manage-news.html">News</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="admin-section">
+            <h2>Manage News</h2>
+            
+            <button onclick="showAddNewsForm()">Add News</button>
+
+            <div id="newsForm" class="form-section" style="display: none;">
+                <h3>Publish News</h3>
+                <form id="addNewsForm">
+                    <input type="text" id="title" placeholder="News Title" required>
+                    <textarea id="content" placeholder="News Content" required></textarea>
+                    <input type="file" id="image" accept="image/*">
+                    <button type="submit">Publish</button>
+                </form>
+            </div>
+
+            <div id="newsList" class="news-table">
+                <p>Loading news...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadNews() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/news', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayNews(data);
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function displayNews(newsList) {
+            const newsElement = document.getElementById('newsList');
+            if (newsList.length === 0) {
+                newsElement.innerHTML = '<p>No news published yet.</p>';
+                return;
+            }
+
+            let html = '<table><tr><th>Title</th><th>Date</th><th>Actions</th></tr>';
+            newsList.forEach(item => {
+                html += `<tr>
+                    <td>${item.title}</td>
+                    <td>${new Date(item.date).toLocaleDateString()}</td>
+                    <td>
+                        <button onclick="editNews('${item.id}')">Edit</button>
+                        <button onclick="deleteNews('${item.id}')">Delete</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</table>';
+            newsElement.innerHTML = html;
+        }
+
+        function showAddNewsForm() {
+            document.getElementById('newsForm').style.display = 'block';
+        }
+
+        document.getElementById('addNewsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = localStorage.getItem('token');
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            try {
+                const response = await fetch('/api/news?action=create', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, content })
+                });
+
+                const data = await response.json();
+                alert(data.message || 'News published');
+                loadNews();
+                document.getElementById('newsForm').style.display = 'none';
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        });
+
+        async function deleteNews(newsId) {
+            if (!confirm('Delete this news?')) return;
+            const token = localStorage.getItem('token');
+
+            try {
+                const response = await fetch('/api/news?action=delete', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ newsId })
+                });
+
+                const data = await response.json();
+                alert(data.message);
+                loadNews();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadNews();
+    </script>
+</body>
+</html>

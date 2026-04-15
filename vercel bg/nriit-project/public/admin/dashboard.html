@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+    <nav>
+        <div class="navbar">
+            <h1>NRIIT - Admin Dashboard</h1>
+            <ul>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="manage-students.html">Students</a></li>
+                <li><a href="manage-faculty.html">Faculty</a></li>
+                <li><a href="manage-news.html">News</a></li>
+                <li><a href="reports.html">Reports</a></li>
+                <li><a href="#" onclick="logout()">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <section class="admin-dashboard">
+            <h2>Admin Dashboard</h2>
+            
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Total Students</h3>
+                    <p id="totalStudents">--</p>
+                    <a href="manage-students.html">Manage</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Total Faculty</h3>
+                    <p id="totalFaculty">--</p>
+                    <a href="manage-faculty.html">Manage</a>
+                </div>
+                
+                <div class="card">
+                    <h3>News Published</h3>
+                    <p id="newsCount">--</p>
+                    <a href="manage-news.html">Manage</a>
+                </div>
+                
+                <div class="card">
+                    <h3>Reports</h3>
+                    <p>View system reports</p>
+                    <a href="reports.html">View Reports</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 NRIIT. All rights reserved.</p>
+    </footer>
+
+    <script src="../../assets/js/app.js"></script>
+    <script>
+        async function loadAdminDashboard() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../auth/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin', {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalStudents').textContent = data.totalStudents;
+                    document.getElementById('totalFaculty').textContent = data.totalFaculty;
+                    document.getElementById('newsCount').textContent = data.newsCount;
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '../index.html';
+        }
+
+        loadAdminDashboard();
+    </script>
+</body>
+</html>
